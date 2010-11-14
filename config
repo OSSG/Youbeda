@@ -1,0 +1,172 @@
+# Youbeda configuration
+{
+
+############################## Basic section ################################
+
+### Debug mode - maximum verbosity (disabled by default)
+
+    'debug' => 0,
+
+### Quiet mode - no output at all (disabled by default)
+### NOTE: debug mode has higher priority
+
+    'quiet' => 0,
+
+### File to store cache
+
+    'state_file' => '/var/lib/youbeda/state',
+
+### Format in ANSI C standard to output all dates and times
+
+    'time_format' => '%Y-%m-%d %H:%M:%S',
+
+### Format for mail / jabber messages' subject
+### Placeholders: VEID, resource name
+
+    'subject_format' => 'VPS %d: %s failcnt increased!',
+
+### Format for mail / jabber message
+### Placeholders: date and time, VEID, hostname, resource name,
+###		old failcnt value, new failcnt value
+
+    'message_format' => '%s: CT %s on %s: %s failcnt changed from %s to %s.',
+
+# VEID of VPS to skip (Perl-compatible regular expression)
+
+    'disallowed_vps_regex' => '',
+
+# Complete hostname (Perl-compatible regular expression)
+
+    'complete_hostname_regex' => '.+',
+
+# Suffix to add to hostname if it's not complete
+
+    'hostname_suffix' => '.example.com',
+
+########################## end of basic section #############################
+
+############################# Output section ################################
+    'output' => {
+	'log' => {
+
+### Enable output to logfile
+
+	    'enabled' => 1,
+
+### Logfile name
+
+	    'logfile' => '/var/log/youbeda/youbeda.log'
+
+	},
+	'console' => {
+
+### Enable output to STDOUT
+
+	    'enabled' => 1,
+
+	}
+    },
+########################## end of output section ############################
+
+################### List of actions on failcnt increase #####################
+    'actions' => {
+
+######################## Limits adjustment action ###########################
+
+	'adjust' => {
+
+### Enable limits adjustments
+
+	    'enabled' => 1,
+
+### Command to change VPS limits
+
+	    'command' => '/usr/sbin/vzctl',
+
+### VEID of VPS to adjust (Perl-compatible regular expression)
+
+	    'allowed_vps_regex' => '.+',
+
+### Relative adjustment
+
+	    'adjustment' => 0.1,
+
+### Should adjustments be saved (with --save flag) or not
+
+	    'save_changes'	=> 0,
+
+	},
+######################### End of limits adjustment ##########################
+
+############################ Send email action ##############################
+	'email' => {
+
+### Enable sending message on email
+
+	    'enabled'	=> 1,
+
+### What email to use in From: field
+
+	    'from'	=> 'youbeda@example.com',
+
+### Emails to send messages to (as an array or as a string)
+
+	    'to'	=> 'admin@example.com',
+
+### Message charset (default: ISO-8859-1)
+
+	    'charset'	=> 'KOI8-R'
+	},
+######################### end of send email action ##########################
+
+############################## DB log action ################################
+	'db' => {
+
+### Enable events logging to database
+
+	    'enabled'	=> 1,
+
+### Database table name to store data to
+
+	    'stats_table'  => 'stats',
+
+### Database connection parameters
+
+	    'connection' => {	'host'		=> 'localhost',
+				'driver'	=> 'mysql', # DBI driver name
+				'port'		=> 3306,
+				'database'	=> 'youbeda-db',
+				'username'	=> 'youbeda-user',
+				'password'	=> 'youbeda-password'
+	    }
+	},
+######################## end of DB logging action ###########################
+
+############################# Jabber action #################################
+	'jabber' => {
+
+### Enable sending messages to Jabber
+
+	    'enabled'	=> 1,
+
+### JIDs to send messages to (as an array or as a string)
+
+	    'to'	=> [ 'user1@jabber.example.com',
+			     'user2@jabber.example.com' ],
+
+### Jabber connection parameters
+
+	    'connection' => {	'hostname'	=> 'jabber.example.com',
+            			'username'	=> 'youbeda-bot',
+                    		'password'	=> 'youbeda-bot-password',
+                    		'resource'	=> 'Youbeda',
+				'tls'		=> 1, # use TLS?
+				'port' 		=> 5222,
+				'register' 	=> 0 # register new account?
+	    }
+	}
+########################## end of Jabber action #############################
+    }
+########################## end of actions list ##############################
+
+};
