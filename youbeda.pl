@@ -65,7 +65,10 @@ if ($@) {
     print STDERR "Bad configuration format: $@\n";
     exit 1;
 }
-
+unless ($config) {
+    print STDERR "Configuration not found!\n";
+    exit 1;
+}
 
 # Set debug mode or quiet mode depending on command-line options
 # and config settings
