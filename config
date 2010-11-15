@@ -64,6 +64,21 @@
 
 	    'enabled' => 1,
 
+	},
+	'syslog' => {
+
+### Enable output to syslog
+
+	    'enabled' => 1,
+
+### Ident
+
+	    'ident' => 'youbeda',
+
+### Facility
+
+	    'facility' => 'daemon'
+
 	}
     },
 ########################## end of output section ############################

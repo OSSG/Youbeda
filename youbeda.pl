@@ -19,9 +19,10 @@
 use strict;
 use warnings;
 
-# Initially Youbeda needs only standard modules
+# Initially Youbeda needs only standard core modules
 use Getopt::Long qw(:config no_ignore_case bundling no_auto_abbrev);
 use POSIX;
+use Sys::Syslog qw(:standard);
 
 # Path to where OVZ resource counters stored at
 my $base = '/proc/bc/';
@@ -166,8 +167,10 @@ sub alert {
     my $alerts = shift;
     foreach my $line (@$alerts) {
 
-# Write message to console and/or into logfile
-	if ($config->{'output'}->{'log'}->{'enabled'} || $config->{'output'}->{'console'}->{'enabled'}) {
+# Write message to console and/or into logfile and/or into syslog
+	if ($config->{'output'}->{'log'}->{'enabled'} ||
+		$config->{'output'}->{'console'}->{'enabled'} ||
+		$config->{'output'}->{'syslog'}->{'enabled'}) {
 	    notice(sprintf($config->{'message_format'}, _time($line->[0]), $line->[1], $line->[2], $line->[3], $line->[9], $line->[8]));
 	}
 
@@ -714,6 +717,7 @@ sub notice {
 # Return: 1 on success, 0 on error
 sub output {
     my $message = shift;
+    my $raw_message = $message;
     my $mode = shift;
     $message = '[' . _time() . "] [$mode] $message\n";
     my $res = 1;
@@ -724,6 +728,17 @@ sub output {
 
     if ($config->{'output'}->{'log'}->{'enabled'}) {
 	$res = _write_to_log($config->{'output'}->{'log'}->{'logfile'}, $message);
+    }
+
+    if ($config->{'output'}->{'syslog'}->{'enabled'}) {
+	openlog($config->{'output'}->{'syslog'}->{'ident'}, 'ndelay,pid', $config->{'output'}->{'syslog'}->{'facility'});
+# Define priority level depending on message type
+	my $priority = 'notice';
+	$priority = 'err' if ($mode eq 'error');
+	$priority = 'debug' if ($mode eq 'debug');
+# Write to syslog
+	syslog($priority, $raw_message);
+	closelog();
     }
 
     return $res;
