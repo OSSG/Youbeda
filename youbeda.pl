@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 use strict;
 use warnings;
 
@@ -31,7 +30,7 @@ my $cache = {};
 my $options = {};
 
 GetOptions(
-    $options, 'help|?', 'config=s', 'debug|d', 'quiet|q'
+    $options, 'help|?', 'config=s', 'debug|d', 'quiet|q', 'schema'
 ) or die "For usage information try: \t$0 --help\n";
 
 if ($options->{'help'}) {
@@ -39,7 +38,11 @@ if ($options->{'help'}) {
 
  Youbeda - Perl OVZ complainer
 
- Usage: $0 [options] [--config=<file> | --help]
+ Usage: $0 [options] [--config=<file> | --help|-h | --schema]
+
+ --help|-h - print this help and exit
+
+ --schema  - print empty database schema and exit
 
  Options:
 	    --quiet|-q  - run Youbeda in quiet mode
@@ -59,6 +62,12 @@ HELP
 ;
     exit;
 }
+
+if ($options->{'schema'}) {
+    print _get_db_schema();
+    exit;
+}
+
 
 # Get configuration
 my $config = do($options->{'config'} || './config');
@@ -184,9 +193,19 @@ sub alert {
 	    alert_by_jabber($line);
 	}
 
-# Write statistics into database
+# Write statistics into SQL database
 	if ($config->{'actions'}->{'db'}->{'enabled'}) {
 	    write_to_db($line);
+	}
+
+# Write statistics into SQLite database
+	if ($config->{'actions'}->{'sqlite'}->{'enabled'}) {
+	    write_to_sqlite($line);
+	}
+
+# Write SQL requests into file
+	if ($config->{'actions'}->{'sqldump'}->{'enabled'}) {
+	    write_sql_dump($line);
 	}
 
 # Adjust limits
@@ -315,13 +334,13 @@ sub alert_by_jabber {
     return 1;
 }
 
-# Write alert data to database
+# Write alert data into SQL database
 # Params: reference to array with alert data (see alert function)
 # Return: 1 on success, 0 on error
 sub write_to_db {
     my $line = shift;
 
-    debug('Trying to write alert to database');
+    debug('Trying to write alert to SQL database');
 
     unless (defined $cache->{'db_modules'}) {
 	debug('Checking for modules needed');
@@ -329,7 +348,7 @@ sub write_to_db {
 
 	    eval "use $module;";
     	    if ($@) {
-		warning("Can't use module $module. Writing to database disabled");
+		warning("Can't use module $module. Writing to SQL database disabled");
 		$config->{'actions'}->{'db'}->{'enabled'} = 0;
 		return 0;
 	    }
@@ -341,10 +360,10 @@ sub write_to_db {
     my $dbh;
     my $sth;
 
-# Seek for existing database connection and request object in cache
+# Seek for existing SQL database connection and request object in cache
 # Make new ones if not found
     unless (defined ($cache->{'dbh'}) && defined ($cache->{'sth'})) {
-	debug('Connecting to database');
+	debug('Connecting to SQL database');
 
 	$dbh = DBI->connect('dbi:' . $config->{'actions'}->{'db'}->{'connection'}->{'driver'} .
 				     ':dbname=' . $config->{'actions'}->{'db'}->{'connection'}->{'database'} .
@@ -354,7 +373,7 @@ sub write_to_db {
 				     $config->{'actions'}->{'db'}->{'connection'}->{'password'},
 				     {'PrintError' => 0});
 	unless ($dbh) {
-	    warning('Can\'t connect to database: ' . DBI::errstr() . 'Writing to database disabled');
+	    warning('Can\'t connect to SQL database: ' . DBI::errstr() . 'Writing to SQL database disabled');
 	    $config->{'actions'}->{'db'}->{'enabled'} = 0;
 	    return 0;
 	}
@@ -363,9 +382,8 @@ sub write_to_db {
 	$cache->{'dbh'} = \$dbh;
 
 	debug('Preparing SQL request');
-	unless ($sth = $dbh->prepare('INSERT INTO ' . $config->{'actions'}->{'db'}->{'stats_table'} .
-	    ' (event_time, hostname, veid, resource, held_value, maxheld_value, barrier_value, limit_value, failcnt_value, old_failcnt_value) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')) {
-	    warning('Can\'t prepare SQL request: ' . $dbh->errstr() . ' . Writing to database disabled');
+	unless ($sth = $dbh->prepare(_get_db_request_template($config->{'actions'}->{'db'}->{'stats_table'}))) {
+	    warning('Can\'t prepare SQL request: ' . $dbh->errstr() . ' . Writing to SQL database disabled');
 	    $config->{'actions'}->{'db'}->{'enabled'} = 0;
 	    return 0;
 	}
@@ -381,13 +399,73 @@ sub write_to_db {
     my $res = $sth->execute(strftime('%Y-%m-%d %H:%M:%S', localtime($line->[0])), $line->[2], $line->[1], $line->[3], $line->[4], $line->[5], $line->[6], $line->[7], $line->[8], $line->[9]);
 
     unless (defined $res) {
-	warning('Can\'t write to database: ' . $dbh->errstr() . ' . Writing to database disabled');
+	warning('Can\'t write to SQL database: ' . $dbh->errstr() . ' . Writing to SQL database disabled');
 	$config->{'actions'}->{'db'}->{'enabled'} = 0;
 	return 0;
     }
 
     return 1;
 }
+
+# Write alert data into SQLite database
+# Params: reference to array with alert data (see alert function)
+# Return: 1 on success, 0 on error
+
+sub write_to_sqlite {
+    my $line = shift;
+    debug('Trying to write alert to SQLite database');
+
+}
+
+# Write SQL request to file
+# Params: reference to array with alert data (see alert function)
+# Return: 1 on success, 0 on error
+sub write_sql_dump {
+    my $line = shift;
+
+    debug('Trying to write alert into SQL dump file or pipe \'' . $config->{'actions'}->{'sqldump'}->{'filename'}) . '\'';
+    my $string = sprintf(_get_db_request_template($config->{'actions'}->{'sqldump'}->{'stats_table'}, '\'%s\''),
+			    strftime('%Y-%m-%d %H:%M:%S', localtime($line->[0])), $line->[2], $line->[1],
+			    $line->[3], $line->[4], $line->[5], $line->[6], $line->[7], $line->[8], $line->[9]) . ';';
+
+
+    my $sqldump;
+    unless (defined $cache->{'sqldump'}) {
+
+	if ($config->{'actions'}->{'sqldump'}->{'is_pipe'}) {
+	    debug('Open SQL dump pipe');
+	    unless (open($sqldump, '| ' . $config->{'actions'}->{'sqldump'}->{'filename'})) {
+		error('Can\'t open pipe ' . $config->{'actions'}->{'sqldump'}->{'filename'} . " to print SQL request: $! . Writing to SQL dump pipe disabled.");
+	        $config->{'actions'}->{'sqldump'}->{'enabled'} = 0;
+		return 0;
+	    }
+	}
+	else {
+	    debug('Open SQL dump file');
+	    unless (open($sqldump, '>>' . $config->{'actions'}->{'sqldump'}->{'filename'})) {
+		error('Can\'t open file ' . $config->{'actions'}->{'sqldump'}->{'filename'} . " to write SQL request: $! . Writing to SQL dump file disabled.");
+	        $config->{'actions'}->{'sqldump'}->{'enabled'} = 0;
+		return 0;
+	    }
+	    debug('Lock SQL dump file');
+	    unless (flock($sqldump, 2)) {
+		error('Can\'t lock file ' . $config->{'actions'}->{'sqldump'}->{'filename'} . " while writing SQL request: $! . Writing to SQL dump file disabled.");
+	        $config->{'actions'}->{'sqldump'}->{'enabled'} = 0;
+	        return 0;
+	    }
+	}
+	$cache->{'sqldump'} = \$sqldump;
+    }
+    else {
+	$sqldump = ${$cache->{'sqldump'}};
+    }
+
+    print $sqldump $string . "\n";
+    debug('SQL request written');
+
+    return 1;
+}
+
 
 # Adjust limit values
 # Params: reference to array with alert data (see alert function)
@@ -833,7 +911,48 @@ sub _clean_cache {
 	${$cache->{'dbh'}}->disconnect();
     }
 
+    if (defined $cache->{'sqldump'}) {
+	close ${$cache->{'sqldump'}};
+    }
+
     return 1;
+}
+
+# Get database schema
+# Params: none
+# Return: empty database schema as string
+sub _get_db_schema {
+
+return <<END
+CREATE TABLE stats (
+      event_time TIMESTAMP NOT NULL,
+      hostname TEXT NOT NULL,
+      veid INTEGER NOT NULL,
+      resource TEXT NOT NULL,
+      held_value BIGINT NOT NULL,
+      maxheld_value BIGINT NOT NULL,
+      barrier_value BIGINT NOT NULL,
+      limit_value BIGINT NOT NULL,
+      failcnt_value BIGINT NOT NULL,
+      old_failcnt_value BIGINT NOT NULL
+);
+
+CREATE INDEX stats_time_idx ON stats (event_time);
+END
+}
+
+# Get SQL request template
+# Params: table name, (optional) placeholder
+# default placeholder: '?'
+# Return: request as string
+sub _get_db_request_template {
+    my $table = shift;
+    my $placeholder = shift || '?';
+
+    my $placeholders = ($placeholder . ',') x 10;
+    chop($placeholders);
+
+    return "INSERT INTO $table (event_time, hostname, veid, resource, held_value, maxheld_value, barrier_value, limit_value, failcnt_value, old_failcnt_value) VALUES ($placeholders)";
 }
 
 1;

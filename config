@@ -51,7 +51,7 @@
 
 ### Enable output to logfile
 
-	    'enabled' => 1,
+	    'enabled' => 0,
 
 ### Logfile name
 
@@ -62,7 +62,7 @@
 
 ### Enable output to STDOUT
 
-	    'enabled' => 1,
+	    'enabled' => 0,
 
 	},
 	'syslog' => {
@@ -92,7 +92,7 @@
 
 ### Enable limits adjustments
 
-	    'enabled' => 1,
+	    'enabled' => 0,
 
 ### Command to change VPS limits
 
@@ -118,7 +118,7 @@
 
 ### Enable sending message on email
 
-	    'enabled'	=> 1,
+	    'enabled'	=> 0,
 
 ### What email to use in From: field
 
@@ -137,15 +137,15 @@
 ############################## DB log action ################################
 	'db' => {
 
-### Enable events logging to database
+### Enable events logging to SQL database
 
-	    'enabled'	=> 1,
+	    'enabled'	=> 0,
 
-### Database table name to store data to
+### SQL database table name to store data to
 
 	    'stats_table'  => 'stats',
 
-### Database connection parameters
+### SQL database connection parameters
 
 	    'connection' => {	'host'		=> 'localhost',
 				'driver'	=> 'mysql', # DBI driver name
@@ -157,12 +157,53 @@
 	},
 ######################## end of DB logging action ###########################
 
+############################# SQLite action #################################
+	'sqlite' => {
+
+### Enable writing messages to SQLite database
+
+	    'enabled'	=> 0,
+
+### SQLite database table name to store data to
+
+	    'stats_table'  => 'stats',
+
+### Path to SQLite database (database will be created if not exists)
+
+	    'db' => './youbeda.db'
+
+	},
+########################## end of SQLite action #############################
+
+############################ SQL dump action ################################
+	'sqldump' => {
+
+### Enable writing SQL requests to dump
+
+	    'enabled'	=> 0,
+
+### Database table name to store data to
+
+	    'stats_table'  => 'stats',
+
+### Path to dump file
+
+	    'filename' => './dump.sql',
+
+### Should the dump be piped? (i.e. printing to input of other command instead
+### of ordinary file)
+
+	    'is_pipe' => 0
+
+	},
+######################### end of SQL dump action ############################
+
 ############################# Jabber action #################################
 	'jabber' => {
 
 ### Enable sending messages to Jabber
 
-	    'enabled'	=> 1,
+	    'enabled'	=> 0,
 
 ### JIDs to send messages to (as an array or as a string)
 
