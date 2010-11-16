@@ -381,7 +381,7 @@ sub write_to_db {
 # Store connection in cache to use next time
 	$cache->{'dbh'} = \$dbh;
 
-	debug('Preparing SQL request');
+	debug('Preparing SQL request to SQL database');
 	unless ($sth = $dbh->prepare(_get_db_request_template($config->{'actions'}->{'db'}->{'stats_table'}))) {
 	    warning('Can\'t prepare SQL request: ' . $dbh->errstr() . ' . Writing to SQL database disabled');
 	    $config->{'actions'}->{'db'}->{'enabled'} = 0;
@@ -413,8 +413,80 @@ sub write_to_db {
 
 sub write_to_sqlite {
     my $line = shift;
+
     debug('Trying to write alert to SQLite database');
 
+    unless (defined $cache->{'sqlite_modules'}) {
+	debug('Checking for modules needed');
+	foreach my $module ('DBI', 'DBD::SQLite') {
+
+	    eval "use $module;";
+	    if ($@) {
+		warning("Can't use module $module. Writing to SQLite database disabled");
+		$config->{'actions'}->{'sqlite'}->{'enabled'} = 0;
+		return 0;
+	    }
+
+	}
+	$cache->{'sqlite_modules'} = 1;
+    }
+
+
+    my $creation_flag = !(-f $config->{'actions'}->{'sqlite'}->{'db'});
+
+    my $dbh;
+    my $sth;
+    unless ((defined $cache->{'sqlite_dbh'}) && (defined $cache->{'sqlite_sth'})) {
+	debug('Connecting to SQLite database');
+
+	$dbh = DBI->connect('dbi:SQLite:' . $config->{'actions'}->{'sqlite'}->{'db'}, '', '', {'PrintError' => 0});
+
+	unless ($dbh) {
+	    warning('Can\'t connect to SQLite database: ' . DBI::errstr() . 'Writing to SQLite database disabled');
+	    $config->{'actions'}->{'sqlite'}->{'enabled'} = 0;
+	    return 0;
+	}
+
+# Store connection in cache to use next time
+	$cache->{'sqlite_dbh'} = \$dbh;
+
+	if ($creation_flag) {
+	    debug('SQLite database not found. Trying to create new');
+# Split schema into separate requests and execute them one by one
+	    my @schema = split(/;/,_get_db_schema());
+	    foreach my $element (@schema) {
+		unless ($dbh->do($element)) {
+		    warning('Can\'t populate SQLite database with data schema: ' . $dbh->errstr() . ' . Writing to SQLite database disabled');
+		    $config->{'actions'}->{'sqlite'}->{'enabled'} = 0;
+		    return 0;
+		}
+	    }
+	}
+
+	debug('Preparing SQL request to SQLite database');
+	unless ($sth = $dbh->prepare(_get_db_request_template($config->{'actions'}->{'sqlite'}->{'stats_table'}))) {
+	    warning('Can\'t prepare SQL request: ' . $dbh->errstr() . ' . Writing to SQLite database disabled');
+	    $config->{'actions'}->{'sqlite'}->{'enabled'} = 0;
+	    return 0;
+	}
+
+# Store request object in cache to use next time
+	$cache->{'sqlite_sth'} = \$sth;
+
+    }
+    else {
+	$sth = ${$cache->{'sqlite_sth'}};
+    }
+
+    my $res = $sth->execute(strftime('%Y-%m-%d %H:%M:%S', localtime($line->[0])), $line->[2], $line->[1], $line->[3], $line->[4], $line->[5], $line->[6], $line->[7], $line->[8], $line->[9]);
+
+    unless (defined $res) {
+	warning('Can\'t write to SQLite database: ' . $dbh->errstr() . ' . Writing to SQLite database disabled');
+	$config->{'actions'}->{'sqlite'}->{'enabled'} = 0;
+	return 0;
+    }
+
+    return 1;
 }
 
 # Write SQL request to file
@@ -423,7 +495,8 @@ sub write_to_sqlite {
 sub write_sql_dump {
     my $line = shift;
 
-    debug('Trying to write alert into SQL dump file or pipe \'' . $config->{'actions'}->{'sqldump'}->{'filename'}) . '\'';
+    debug('Trying to write alert into SQL dump file or pipe \'' . $config->{'actions'}->{'sqldump'}->{'filename'} . '\'');
+
     my $string = sprintf(_get_db_request_template($config->{'actions'}->{'sqldump'}->{'stats_table'}, '\'%s\''),
 			    strftime('%Y-%m-%d %H:%M:%S', localtime($line->[0])), $line->[2], $line->[1],
 			    $line->[3], $line->[4], $line->[5], $line->[6], $line->[7], $line->[8], $line->[9]) . ';';
@@ -905,10 +978,21 @@ sub _clean_cache {
     }
 
     if (defined $cache->{'dbh'}) {
-	debug('Finishing SQL request');
-	${$cache->{'sth'}}->finish();
-	debug('Disconnecting from database');
+	if (defined $cache->{'sth'}) {
+	    debug('Finishing SQL request to SQL database');
+	    ${$cache->{'sth'}}->finish();
+	}
+	debug('Disconnecting from SQL database');
 	${$cache->{'dbh'}}->disconnect();
+    }
+
+    if (defined $cache->{'sqlite_dbh'}) {
+	if (defined $cache->{'sqlite_sth'}) {
+	    debug('Finishing SQL request to SQLite database');
+	    ${$cache->{'sqlite_sth'}}->finish();
+	}
+	debug('Disconnecting from SQLite database');
+	${$cache->{'sqlite_dbh'}}->disconnect();
     }
 
     if (defined $cache->{'sqldump'}) {
