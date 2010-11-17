@@ -38,7 +38,7 @@ if ($options->{'help'}) {
 
  Youbeda - Perl OVZ complainer
 
- Usage: $0 [options] [-c|--config=<file> | --help|-h | --schema|-s]
+ Usage: $0 [options] [--config|-c <file> | --help|-h | --schema|-s]
 
  --help|-h - print this help and exit
 
