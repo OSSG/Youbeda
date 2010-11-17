@@ -170,7 +170,7 @@
 
 ### Path to SQLite database (database will be created if not exists)
 
-	    'db' => './youbeda.db'
+	    'db' => '/var/lib/youbeda/youbeda.db'
 
 	},
 ########################## end of SQLite action #############################
@@ -188,9 +188,9 @@
 
 ### Path to dump file
 
-	    'filename' => './dump.sql',
+	    'filename' => '/var/log/youbeda/dump.sql.log',
 
-### Should the dump be piped? (i.e. printing to input of other command instead
+### Should the dump be piped? (i.e. printing to stdin of other command instead
 ### of ordinary file)
 
 	    'is_pipe' => 0
