@@ -30,7 +30,7 @@ my $cache = {};
 my $options = {};
 
 GetOptions(
-    $options, 'help|?', 'config|c=s', 'debug|d', 'quiet|q', 'schema|s'
+    $options, 'help|h', 'config|c=s', 'debug|d', 'quiet|q', 'schema|s'
 ) or die "For usage information try: \t$0 --help\n";
 
 if ($options->{'help'}) {
