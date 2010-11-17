@@ -30,7 +30,7 @@ my $cache = {};
 my $options = {};
 
 GetOptions(
-    $options, 'help|?', 'config=s', 'debug|d', 'quiet|q', 'schema'
+    $options, 'help|?', 'config|c=s', 'debug|d', 'quiet|q', 'schema|s'
 ) or die "For usage information try: \t$0 --help\n";
 
 if ($options->{'help'}) {
@@ -38,11 +38,11 @@ if ($options->{'help'}) {
 
  Youbeda - Perl OVZ complainer
 
- Usage: $0 [options] [--config=<file> | --help|-h | --schema]
+ Usage: $0 [options] [-c|--config=<file> | --help|-h | --schema|-s]
 
  --help|-h - print this help and exit
 
- --schema  - print empty database schema and exit
+ --schema|-s  - print empty database schema and exit
 
  Options:
 	    --quiet|-q  - run Youbeda in quiet mode
