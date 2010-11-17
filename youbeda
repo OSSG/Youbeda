@@ -40,23 +40,19 @@ if ($options->{'help'}) {
 
  Usage: $0 [options] [--config|-c <file> | --help|-h | --schema|-s]
 
- --help|-h - print this help and exit
-
- --schema|-s  - print empty database schema and exit
-
  Options:
-	    --quiet|-q  - run Youbeda in quiet mode
-			  (to set this mode you could also use config)
 
-	    --debug|-d	- run Youbeda with maximum verbosity
-			  (to set this mode you could also use config)
+ --quiet | -q	- run Youbeda in quiet mode
 
- Note that command-line options always overriding values in config and
-debug mode overrides quiet mode.
+ --debug | -d	- run Youbeda with maximum verbosity
 
- If config file is not specified Youbeda will look for file \'config\'
-in current directory.
+ --config | -c	- explicitly specify configuration file
 
+ --help | -h	- print this help and exit
+
+ --schema | -s	- print empty database schema and exit
+
+ See youbeda(1) man page for details
 
 HELP
 ;

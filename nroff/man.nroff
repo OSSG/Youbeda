@@ -1,0 +1,84 @@
+.TH Youbeda 1 LOCAL
+.SH NAME
+Youbeda - Perl OVZ complainer
+.SH SYNOPSIS
+.B youbeda
+[
+.B \-qd
+][
+.B \-\-config | \-c
+.I file
+]
+.br
+.B youbeda \-\-help | \-h
+.br
+.B youbeda \-\-schema | \-s
+.SH DESCRIPTION
+.PP
+.B Youbeda
+is an OVZ complainer. It can look after VEs resources limits and make some actions on
+.I failcnt
+value increase. VEs to look after could be explicitly specified.
+.SS "Available actions:"
+.PP
+				\- print notification (to stdout and/or logfile
+.br
+				  and/or syslog);
+
+.br
+				\- send notification via email;
+
+.br
+				\- send notification via jabber;
+
+.br
+				\- write complete statistics for exceeded resource
+.br
+				  into SQL database and/or SQLite and/or into file
+.br
+				  or pipe as plain SQL requests;
+
+.br
+				\- adjust barrier and limit values for exceeded
+.br
+				  resources.
+.PP
+.B Youbeda
+written in Perl and basically needs only standard core Perl modules. However for some actions third-party Perl modules could be needed.
+.SH OPTIONS
+.TP 20
+.B \-\-quiet | \-q
+run Youbeda in quiet mode
+.br
+(to set this mode you could also use configuration)
+.TP 20
+.B \-\-debug | \-d
+run Youbeda with maximum verbosity
+.br
+(to set this mode you could also use configuration)
+.TP 20
+.B \-\-config | \-c
+specify configuration file
+.br
+If configuration is not specified
+.B Youbeda
+will look for file
+.I config
+in current directory
+.TP 20
+.B \-\-help | \-h
+print short help text
+.TP 20
+.B \-\-schema | \-s
+print empty database schema
+.SH NOTES
+.PP
+Command\-line options always overriding values in configuration. And debug mode overrides quiet mode.
+.PP
+Youbeda output all messages only to destinations specified in
+.br
+configuration.
+.br
+If you disable all output options (stdout / logfile / syslog) there will be no output at all. Even in debug mode.
+.SH AUTHOR
+Fedor A. Fetisov <faf@ossg.ru>
