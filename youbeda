@@ -18,6 +18,8 @@
 use strict;
 use warnings;
 
+use constant VERSION => '0.3.0';
+
 # Initially Youbeda needs only standard core modules
 use Getopt::Long qw(:config no_ignore_case bundling no_auto_abbrev);
 use POSIX;
@@ -30,7 +32,7 @@ my $cache = {};
 my $options = {};
 
 GetOptions(
-    $options, 'help|h', 'config|c=s', 'debug|d', 'quiet|q', 'schema|s'
+    $options, 'help|h', 'config|c=s', 'debug|d', 'quiet|q', 'schema|s', 'version|v'
 ) or die "For usage information try: \t$0 --help\n";
 
 if ($options->{'help'}) {
@@ -38,7 +40,7 @@ if ($options->{'help'}) {
 
  Youbeda - Perl OVZ complainer
 
- Usage: $0 [options] [--config|-c <file> | --help|-h | --schema|-s]
+ Usage: $0 [options] [--config|-c <file> | --help|-h | --schema|-s | --version|-v]
 
  Options:
 
@@ -48,9 +50,11 @@ if ($options->{'help'}) {
 
  --config | -c	- explicitly specify configuration file
 
- --help | -h	- print this help and exit
+ --help | -h	- print this help
 
- --schema | -s	- print empty database schema and exit
+ --schema | -s	- print empty database schema
+
+ --version | -v	- print version of Youbeda
 
  See youbeda(1) man page for details
 
@@ -61,6 +65,11 @@ HELP
 
 if ($options->{'schema'}) {
     print _get_db_schema();
+    exit;
+}
+
+if ($options->{'version'}) {
+    print 'Youbeda OVZ complainer version ' . VERSION . "\n";
     exit;
 }
 

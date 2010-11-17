@@ -3,12 +3,13 @@ Youbeda(1)                                                          Youbeda(1)
 
 
 NNAAMMEE
-       Youbeda - Perl OVZ complainer
+       YYoouubbeeddaa - Perl OVZ complainer
 
 SSYYNNOOPPSSIISS
        yyoouubbeeddaa [ --qqdd ][ ----ccoonnffiigg || --cc _f_i_l_e ]
        yyoouubbeeddaa ----hheellpp || --hh
        yyoouubbeeddaa ----sscchheemmaa || --ss
+       yyoouubbeeddaa ----vveerrssiioonn || --vv
 
 DDEESSCCRRIIPPTTIIOONN
        YYoouubbeeddaa  is  an  OVZ complainer. It can look after VEs resources limits
@@ -30,15 +31,14 @@ DDEESSCCRRIIPPTTIIOONN
                            - adjust barrier and limit values for exceeded
                              resources.
 
-       YYoouubbeeddaa  written  in  Perl  and basically needs only standard core Perl
-       modules. However for some actions third-party  Perl  modules  could  be
-       needed.
+       YYoouubbeeddaa  written  in  Perl  and basically needs only core Perl modules.
+       However for some actions third-party Perl modules could be needed.
 
 OOPPTTIIOONNSS
-       ----qquuiieett || --qq        run Youbeda in quiet mode
+       ----qquuiieett || --qq        run YYoouubbeeddaa in quiet mode
                            (to set this mode you could also use configuration)
 
-       ----ddeebbuugg || --dd        run Youbeda with maximum verbosity
+       ----ddeebbuugg || --dd        run YYoouubbeeddaa with maximum verbosity
                            (to set this mode you could also use configuration)
 
        ----ccoonnffiigg || --cc       specify configuration file
@@ -49,14 +49,16 @@ OOPPTTIIOONNSS
 
        ----sscchheemmaa || --ss       print empty database schema
 
+       ----vveerrssiioonn || --vv      print YYoouubbeeddaa version
+
 NNOOTTEESS
-       Command-line options always overriding  values  in  configuration.  And
+       Command-line  options  always  overriding  values in configuration. And
        debug mode overrides quiet mode.
 
-       Youbeda output all messages only to destinations specified in
+       YYoouubbeeddaa output all messages only to destinations specified in
        configuration.
-       If  you  disable  all  output options (stdout / logfile / syslog) there
-       will be no output at all. Even in debug mode.
+       If you disable all output options there will be no output at  all  even
+       in debug mode.
 
 AAUUTTHHOORR
        Fedor A. Fetisov <faf@ossg.ru>
