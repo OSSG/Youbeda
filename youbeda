@@ -18,7 +18,7 @@
 use strict;
 use warnings;
 
-use constant VERSION => '0.3.0';
+use constant VERSION => '0.3.1';
 
 # Initially Youbeda needs only standard core modules
 use Getopt::Long qw(:config no_ignore_case bundling no_auto_abbrev);
@@ -223,7 +223,6 @@ sub alert {
     return 1;
 }
 
-
 # Send email notification
 # Params: reference to array with alert data (see alert function)
 # Return: 1 on success, 0 on error
@@ -415,7 +414,6 @@ sub write_to_db {
 # Write alert data into SQLite database
 # Params: reference to array with alert data (see alert function)
 # Return: 1 on success, 0 on error
-
 sub write_to_sqlite {
     my $line = shift;
 
@@ -543,7 +541,6 @@ sub write_sql_dump {
 
     return 1;
 }
-
 
 # Adjust limit values
 # Params: reference to array with alert data (see alert function)
@@ -781,7 +778,12 @@ sub compare_data {
 	foreach my $resource (keys %{$new_data->{$veid}->{'resources'}}) {
 	    if (defined $old_data->{$veid}->{'resources'}->{$resource}) {
 		if ($new_data->{$veid}->{'resources'}->{$resource}->[4] != $old_data->{$veid}->{'resources'}->{$resource}->[4]) {
-		    push(@res, [$new_data->{$veid}->{'time'}, $veid, $new_data->{'hostname'}, $resource,  @{$new_data->{$veid}->{'resources'}->{$resource}}, $old_data->{$veid}->{'resources'}->{$resource}->[4]]);
+		    if ($new_data->{$veid}->{'resources'}->{$resource}->[4] != 0) {
+			push(@res, [$new_data->{$veid}->{'time'}, $veid, $new_data->{'hostname'}, $resource,  @{$new_data->{$veid}->{'resources'}->{$resource}}, $old_data->{$veid}->{'resources'}->{$resource}->[4]]);
+		    }
+		    else {
+			debug("New failcnt for $veid:$resource is 0. Skipped");
+		    }
 		}
 	    }
 	    else {
